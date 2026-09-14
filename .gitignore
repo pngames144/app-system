@@ -33,6 +33,20 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Local PocketBase runtime files
+/pocketbase/pocketbase.exe
+/pocketbase/pb_data/
+
+# Local secrets and signing credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+
 # Symbolication related
 app.*.symbols
 
