@@ -57,10 +57,9 @@ class TaskService {
 
     try {
       final taskRecord = await pb.collection('tasks').getFirstListItem(
-            'id = "$taskId" && user = "$userId"',
-          );
+        'id = "$taskId" && user = "$userId"',
+      );
       final task = _fromRecord(taskRecord);
-
       if (task.isCompleted) {
         throw StateError('Task has already been completed.');
       }
@@ -73,8 +72,9 @@ class TaskService {
         expToNextLevel: stats.expToNextLevel,
         hp: stats.hp,
         coins: stats.coins + task.expReward,
+        amnestyPasses: stats.amnestyPasses,
+        amnestyWeekStart: stats.amnestyWeekStart,
       );
-
       if (updatedStats.currentExp >= updatedStats.expToNextLevel) {
         updatedStats.level++;
         updatedStats.currentExp = 0;
@@ -82,24 +82,20 @@ class TaskService {
             (updatedStats.expToNextLevel * 1.2).round();
       }
 
-      final batch = pb.createBatch();
-      batch.collection('users').update(
+      final updatedUserRecord = await pb.collection('users').update(
         userId,
         body: PlayerService.toBody(updatedStats),
       );
-      batch.collection('tasks').update(
-        taskId,
-        body: {'isCompleted': true},
-      );
-
-      final results = await batch.send();
-      if (results.any((result) => result.status >= 400)) {
-        throw StateError('Could not complete task.');
+      try {
+        await pb.collection('tasks').update(taskId, body: {'isCompleted': true});
+      } catch (error) {
+        await pb.collection('users').update(
+          userId,
+          body: PlayerService.toBody(stats),
+        );
+        throw StateError('Could not complete task. Player stats were restored: $error');
       }
-
-      final updatedUserRecord = await pb.collection('users').getOne(userId);
       pb.authStore.save(pb.authStore.token, updatedUserRecord);
-
       return updatedStats;
     } finally {
       _completingTaskIds.remove(taskId);

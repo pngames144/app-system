@@ -38,6 +38,8 @@ class PlayerService {
       'expToNextLevel': stats.expToNextLevel,
       'hp': stats.hp,
       'coins': stats.coins,
+      'amnestyPasses': stats.amnestyPasses,
+      'amnestyWeekStart': stats.amnestyWeekStart?.toUtc().toIso8601String(),
     };
   }
 
@@ -52,6 +54,10 @@ class PlayerService {
       expToNextLevel: value('expToNextLevel', 100),
       hp: value('hp', 100),
       coins: value('coins', 0),
+      amnestyPasses: value('amnestyPasses', 2),
+      amnestyWeekStart: DateTime.tryParse(
+        record.data['amnestyWeekStart'] as String? ?? '',
+      ),
     );
   }
 
